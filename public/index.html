@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Upload Signatures</title>
+</head>
+<body>
+<h1>Upload Signatures</h1>
+<div>
+    <label for="signature1">Signature 1:</label>
+    <input id="signature1" type="file" accept="image/*" onchange="previewSignature(event)">
+    <br>
+    <img id="signaturePreview1_af_image" src="" alt="Signature 1 Preview" style="max-width: 300px; max-height: 200px;">
+</div>
+<br>
+<button onclick="populateAndPrint()">Print</button>
+
+<script>
+    function previewSignature(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        // Check if the uploaded file is an image
+        if (!file.type.startsWith('image/')) {
+            alert('Please upload an image file.');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const signaturePreview = document.getElementById('signaturePreview1_af_image');
+            signaturePreview.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    async function populateAndPrint() {
+        const signatureInput = document.getElementById('signature1');
+        const signaturePreview = document.getElementById('signaturePreview1_af_image');
+        const signatureFile = signatureInput.files[0];
+
+        if (!signatureFile) {
+            alert('Please upload a signature image.');
+            return;
+        }
+
+        // Read and display the signature image before printing
+        const fileReader = new FileReader();
+        fileReader.onload = function(e) {
+            signaturePreview.src = e.target.result;
+        };
+        fileReader.readAsDataURL(signatureFile);
+
+        const formData = new FormData();
+        formData.append('pdfPath', 'template.pdf');
+        formData.append('signatureImagePath', signatureFile);
+        formData.append('signatureFieldName', 'signaturePreview1_af_image'); // Adjust this to match the actual field name
+        formData.append('outputPath', 'output.pdf');
+
+        try {
+            const response = await fetch('/populate-signature', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to populate signature in PDF.');
+            }
+
+            alert('Signature populated successfully. Now you can print the document.');
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Failed to populate signature in PDF.');
+        }
+    }
+</script>
+</body>
+</html>
